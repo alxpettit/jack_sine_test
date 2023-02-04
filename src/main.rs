@@ -1,6 +1,9 @@
 //! Takes 2 audio inputs and outputs them to 2 audio outputs.
 //! All JACK notifications are also printed out.
+use jack::NotificationHandler;
 use std::io;
+use usfx;
+use usfx::OscillatorType;
 
 fn main() {
     // Create client
@@ -9,25 +12,40 @@ fn main() {
 
     // Register ports. They will be used in a callback that will be
     // called when new data is available.
-    let in_a = client
-        .register_port("rust_in_l", jack::AudioIn::default())
-        .unwrap();
-    let in_b = client
-        .register_port("rust_in_r", jack::AudioIn::default())
-        .unwrap();
+    // let in_a = client
+    //     .register_port("rust_in_l", jack::AudioIn::default())
+    //     .unwrap();
+    // let in_b = client
+    //     .register_port("rust_in_r", jack::AudioIn::default())
+    //     .unwrap();
+
+    let mut fx = usfx::Sample::default();
+    // fx.osc_frequency(1000);
+    // fx.osc_type(OscillatorType::Sine);
+    let mut mixer = usfx::Mixer::new(44_100);
+    mixer.play(fx);
+    let mut out_a_p = [0f32; 1024];
+    loop {
+        mixer.generate(&mut out_a_p);
+        dbg!(out_a_p);
+    }
+
     let mut out_a = client
         .register_port("rust_out_l", jack::AudioOut::default())
         .unwrap();
     let mut out_b = client
         .register_port("rust_out_r", jack::AudioOut::default())
         .unwrap();
-    let process_callback = move |_: &jack::Client, ps: &jack::ProcessScope| -> jack::Control {
-        let out_a_p = out_a.as_mut_slice(ps);
-        let out_b_p = out_b.as_mut_slice(ps);
-        let in_a_p = in_a.as_slice(ps);
-        let in_b_p = in_b.as_slice(ps);
-        out_a_p.clone_from_slice(in_a_p);
-        out_b_p.clone_from_slice(in_b_p);
+    let process_callback = move |c: &jack::Client, ps: &jack::ProcessScope| -> jack::Control {
+        let mut out_a_p = out_a.as_mut_slice(ps);
+        let mut out_b_p = out_b.as_mut_slice(ps);
+        // let in_a_p = in_a.as_slice(ps);
+        // let in_b_p = in_b.as_slice(ps);
+        let mut out = [0f32; 1024];
+        mixer.generate(&mut out_a_p);
+        mixer.generate(&mut out_b_p);
+        // out_a_p.clone_from_slice(&out);
+        // out_b_p.clone_from_slice(&out);
         jack::Control::Continue
     };
     let process = jack::ClosureProcessHandler::new(process_callback);
