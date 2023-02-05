@@ -39,6 +39,7 @@ fn main() {
         let mut out_b_p = out_b.as_mut_slice(ps);
 
         generate_sine_wave(200.0, 48_000.0, &mut out_a_p, &mut sample_count);
+        out_b_p.clone_from_slice(&mut out_a_p);
         //dbg!(&sample_count);
         jack::Control::Continue
     };
