@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "jack_test"
+name = "jack_sine_test"
 version = "0.1.0"
 dependencies = [
  "jack",
