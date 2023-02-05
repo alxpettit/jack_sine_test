@@ -2,8 +2,6 @@
 //! All JACK notifications are also printed out.
 use jack::NotificationHandler;
 use std::io;
-use usfx;
-use usfx::OscillatorType;
 
 fn main() {
     // Create client
@@ -19,16 +17,15 @@ fn main() {
     //     .register_port("rust_in_r", jack::AudioIn::default())
     //     .unwrap();
 
-    let mut fx = usfx::Sample::default();
     // fx.osc_frequency(1000);
     // fx.osc_type(OscillatorType::Sine);
-    let mut mixer = usfx::Mixer::new(44_100);
-    mixer.play(fx);
-    let mut out_a_p = [0f32; 1024];
-    loop {
-        mixer.generate(&mut out_a_p);
-        dbg!(out_a_p);
-    }
+    // let mut mixer = usfx::Mixer::new(44_100);
+    // mixer.play(fx);
+    // // let mut out_a_p = [0f32; 1024];
+    // loop {
+    //     mixer.generate(&mut out_a_p);
+    //     dbg!(out_a_p);
+    // }
 
     let mut out_a = client
         .register_port("rust_out_l", jack::AudioOut::default())
@@ -41,11 +38,20 @@ fn main() {
         let mut out_b_p = out_b.as_mut_slice(ps);
         // let in_a_p = in_a.as_slice(ps);
         // let in_b_p = in_b.as_slice(ps);
-        let mut out = [0f32; 1024];
-        mixer.generate(&mut out_a_p);
-        mixer.generate(&mut out_b_p);
+        // let mut out = [0f32; 1024];
+        // mixer.generate(&mut out_a_p);
+        // mixer.generate(&mut out_b_p);
         // out_a_p.clone_from_slice(&out);
         // out_b_p.clone_from_slice(&out);
+
+        let mut toggle = false;
+        for x in out_b_p.iter_mut() {
+            toggle = !toggle;
+            *x = match toggle {
+                true => 1.0,
+                false => -1.0,
+            };
+        }
         jack::Control::Continue
     };
     let process = jack::ClosureProcessHandler::new(process_callback);
