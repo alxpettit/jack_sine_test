@@ -31,7 +31,6 @@ fn main() {
         .register_port("rust_out_r", jack::AudioOut::default())
         .unwrap();
     let mut sample_count: usize = 0;
-    let mut samples_per_sec = 44_100.0;
     let process_callback = move |c: &jack::Client, ps: &jack::ProcessScope| -> jack::Control {
         let mut out_a_p = out_a.as_mut_slice(ps);
         let mut out_b_p = out_b.as_mut_slice(ps);
