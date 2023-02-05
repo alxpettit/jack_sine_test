@@ -1,31 +1,20 @@
 //! Takes 2 audio inputs and outputs them to 2 audio outputs.
 //! All JACK notifications are also printed out.
 use jack::NotificationHandler;
+use std::f32::consts::PI;
 use std::io;
+
+fn generate_sine_wave(frequency: f32, sample_rate: u32, buffer: &mut [f32]) {
+    let period = (sample_rate as f32) / frequency;
+    for (i, x) in buffer.iter_mut().enumerate() {
+        *x = (i as f32 / period * 2.0 * PI).sin();
+    }
+}
 
 fn main() {
     // Create client
     let (client, _status) =
         jack::Client::new("rust_jack_simple", jack::ClientOptions::NO_START_SERVER).unwrap();
-
-    // Register ports. They will be used in a callback that will be
-    // called when new data is available.
-    // let in_a = client
-    //     .register_port("rust_in_l", jack::AudioIn::default())
-    //     .unwrap();
-    // let in_b = client
-    //     .register_port("rust_in_r", jack::AudioIn::default())
-    //     .unwrap();
-
-    // fx.osc_frequency(1000);
-    // fx.osc_type(OscillatorType::Sine);
-    // let mut mixer = usfx::Mixer::new(44_100);
-    // mixer.play(fx);
-    // // let mut out_a_p = [0f32; 1024];
-    // loop {
-    //     mixer.generate(&mut out_a_p);
-    //     dbg!(out_a_p);
-    // }
 
     let mut out_a = client
         .register_port("rust_out_l", jack::AudioOut::default())
@@ -36,22 +25,8 @@ fn main() {
     let process_callback = move |c: &jack::Client, ps: &jack::ProcessScope| -> jack::Control {
         let mut out_a_p = out_a.as_mut_slice(ps);
         let mut out_b_p = out_b.as_mut_slice(ps);
-        // let in_a_p = in_a.as_slice(ps);
-        // let in_b_p = in_b.as_slice(ps);
-        // let mut out = [0f32; 1024];
-        // mixer.generate(&mut out_a_p);
-        // mixer.generate(&mut out_b_p);
-        // out_a_p.clone_from_slice(&out);
-        // out_b_p.clone_from_slice(&out);
 
-        let mut toggle = false;
-        for x in out_b_p.iter_mut() {
-            toggle = !toggle;
-            *x = match toggle {
-                true => 1.0,
-                false => -1.0,
-            };
-        }
+        generate_sine_wave(500.0, 44_000, &mut out_a_p);
         jack::Control::Continue
     };
     let process = jack::ClosureProcessHandler::new(process_callback);
