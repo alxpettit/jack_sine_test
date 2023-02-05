@@ -3,10 +3,18 @@
 use jack::NotificationHandler;
 use std::f32::consts::PI;
 use std::io;
+use std::time::Instant;
 
-fn generate_sine_wave(period: f32, buffer: &mut [f32], sample_count: &mut usize) {
+fn generate_sine_wave(
+    frequency: f32,
+    samples_per_sec: f32,
+    buffer: &mut [f32],
+    sample_count: &mut usize,
+) {
     for x in buffer.iter_mut() {
-        *x = ((*sample_count as f32 / period).sin()) as f32;
+        let time = (*sample_count as f32) / samples_per_sec;
+        let v = 2.0 * std::f32::consts::PI * frequency * time;
+        *x = (v.sin()) as f32;
         *sample_count += 1;
     }
 }
@@ -23,12 +31,13 @@ fn main() {
         .register_port("rust_out_r", jack::AudioOut::default())
         .unwrap();
     let mut sample_count: usize = 0;
+    let mut samples_per_sec = 44_100.0;
     let process_callback = move |c: &jack::Client, ps: &jack::ProcessScope| -> jack::Control {
         let mut out_a_p = out_a.as_mut_slice(ps);
         let mut out_b_p = out_b.as_mut_slice(ps);
 
-        generate_sine_wave(10., &mut out_a_p, &mut sample_count);
-        dbg!(&out_a_p);
+        generate_sine_wave(1000.0, 48_000.0, &mut out_a_p, &mut sample_count);
+        //dbg!(&sample_count);
         jack::Control::Continue
     };
     let process = jack::ClosureProcessHandler::new(process_callback);
