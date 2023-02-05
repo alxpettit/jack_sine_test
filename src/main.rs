@@ -5,6 +5,7 @@ use std::f32::consts::PI;
 use std::io;
 use std::time::Instant;
 
+#[inline]
 fn generate_sine_wave(
     frequency: f32,
     samples_per_sec: f32,
@@ -12,6 +13,8 @@ fn generate_sine_wave(
     sample_count: &mut usize,
 ) {
     for x in buffer.iter_mut() {
+        // Since frequency is measured in terms of seconds,
+        // we must convert samples into seconds accordingly
         let time = (*sample_count as f32) / samples_per_sec;
         let v = 2.0 * std::f32::consts::PI * frequency * time;
         *x = (v.sin()) as f32;
@@ -35,7 +38,7 @@ fn main() {
         let mut out_a_p = out_a.as_mut_slice(ps);
         let mut out_b_p = out_b.as_mut_slice(ps);
 
-        generate_sine_wave(1000.0, 48_000.0, &mut out_a_p, &mut sample_count);
+        generate_sine_wave(200.0, 48_000.0, &mut out_a_p, &mut sample_count);
         //dbg!(&sample_count);
         jack::Control::Continue
     };
